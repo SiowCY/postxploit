@@ -88,13 +88,25 @@
 		bindaddress	bindport	connectaddress	connectport
 		<to-IP>		<to-port>	<from-IP>		<from-port>	
 	$ /etc/init.d/rinetd restart
-	$ ssh -L 8080:127.0.0.1:80	root@192.168.1.7	# Local Port
-	$ ssh -R 8080:127.0.0.1:80	root@192.168.1.7	# Remote Port
+	
+	# SSH Tunnel from your local server to remote server other IP
+	$ ssh root@192.168.1.7 -L 8080:192.168.12.8:80
+	$ telnet 127.0.0.1:8080 -> 192.168.12.8:80
+	
+	# SSH Tunnel from remote server to you to access remote server other IP
+	$ ssh root@[Your IP] -R 8080:192.168.12.8:80
+	$ telnet 127.0.0.1:8080 -> 192.168.12.8:80
+	
 	$ mknod backpipe p ; nc -l -p 8080 < backpipe | nc 10.5.5.151 80 >backpipe    # Port Relay
 	$ mknod backpipe p ; nc -l -p 8080 0 & < backpipe | tee -a inflow | nc localhost 80 | tee -a outflow 1>backpipe    # Proxy (Port 80 to 8080)
 	$ mknod backpipe p ; nc -l -p 8080 0 & < backpipe | tee -a inflow | nc localhost 80 | tee -a outflow & 1>backpipe    # Proxy monitor (Port 80 to 8080)
-	$ ssh -D 127.0.0.1:9050 -N [username]@[ip]		# Tunneling
-	$ proxychains ifconfig
+	
+	# SSH Proxychain settings
+	$ ssh -D 8088 root@10.10.3.2
+	$ nano /etc/proxychains 
+		socks4	127.0.0.1	8088
+	$ proxychains nmap 10.10.3.3
+	
 	
 4. Confidential Information
 	$ id
@@ -205,16 +217,19 @@
 	$ ls -lahR /usr/local/www/apache22/data
 	$ ls -lahR /opt/lampp/htdocs
 	$ ls -lahR /var/www/html/
-	
-	$ python -c 'import pty;pty.spawn("/bin/bash")'		# If limited shell command, break out the jail
+
+7. Break the limited shell
+	$ python -c 'import pty;pty.spawn("/bin/bash")'
 	$ echo os.system('/bin/bash')
 	$ /bin/sh -i
 	$ vi and :!/bin/bash
-	
+
+8. Looking at mount file system
 	$ mount		# file system mount information
 	$ df -h
 	$ cat /etc/fstab	# Any unmount file system
 	
+9. Looking for writable files and folders
 	$ find / -perm -1000 -type d 2>/dev/null	# Sticky bit - Only the owner of the directory or the owner of a file can delete or rename here.
 	$ find / -perm -g=s -type f 2>/dev/null		# SGID (chmod 2000) - run as the group, not the user who started it.
 	$ find -perm -u=s -type f 2>/dev/null		# SUID (chmod 4000) - run as the owner, not the user who started it.
@@ -230,9 +245,26 @@
 	$ find / \( -perm -o w -perm -o x \) -type d 2>/dev/null   # world-writeable & executable folders
 	$ find / -xdev -type d \( -perm -0002 -a ! -perm -1000 \) -print   # world-writeable files
 	$ find /dir -xdev \( -nouser -o -nogroup \) -print   # Noowner files
-	
-	Ping Swipe bash shell
+
+10. Ping Swipe bash shell
 	$ for i in `seq 1 255`; do ping -c 1 10.10.10.$i | tr \\n ' ' | awk '/1 received/ {print $2}'; done
+	
+11. Transferring file using SCP
+	# Transfer file from local to remote server using SCP
+	$ scp local.file root@192.168.1.2:/tmp/remote.file
+	
+	# Transter file from remote to local server using SCP
+	$ scp root@192.168.1.2:/tmp/remote.file local.file
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
