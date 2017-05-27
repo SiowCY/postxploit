@@ -1,4 +1,4 @@
-### Linux Post Exploit for Root shell ###
+### Linux Post Exploit ###
 
 1. What is the distribution type, version, kernel version, environment variables, printer?
 	$ cat /etc/*-release
